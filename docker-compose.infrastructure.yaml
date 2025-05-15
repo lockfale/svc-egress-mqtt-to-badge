@@ -1,0 +1,50 @@
+name: cp-infrastructure
+services:
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    networks:
+      - flink-net
+
+  kafka:
+    image: wurstmeister/kafka
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_CREATE_TOPICS: "ingress-cackalacky-cyberpartner-create:1:1,egress-cackalacky-cyberpartner-create:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    networks:
+      - flink-net
+
+  redis:
+    image: redis:8.0-M04-bookworm
+    networks:
+      - flink-net
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  python-kafka:
+    image: python:3.11.6-bullseye
+    networks:
+      - flink-net
+    depends_on:
+      - kafka
+      - redis
+    volumes:
+      - ./src:/src
+    working_dir: /src
+    command: >
+      bash -c "pip install kafka-python jsonschema && tail -f /dev/null"
+    tty: true
+    stdin_open: true
+
+networks:
+  flink-net:
+    external: false
+    name: flink-net
+
+volumes:
+  redis-data:

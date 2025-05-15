@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-egress-mqtt-to-badge
+  namespace: cackalacky
+  labels:
+    app: svc-egress-mqtt-to-badge
+    broker.source.type: kafka
+  annotations:
+    broker.source.topics: |
+      egress-mqtt-to-badge
+spec:
+  replicas: 3
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: svc-egress-mqtt-to-badge
+  template:
+    metadata:
+      labels:
+        app: svc-egress-mqtt-to-badge
+        broker.source.type: kafka
+      annotations:
+        broker.source.topics: |
+          egress-mqtt-to-badge
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+        - name: svc-egress-mqtt-to-badge
+          image: 059039070213.dkr.ecr.us-east-1.amazonaws.com/cackalacky/2025/cyberpartner/svc-egress-mqtt-to-badge
+          command: ["poetry", "run", "python", "service_translate_kafka_mqtt.py"]
+          envFrom:
+            - secretRef:
+                name: doppler-ckc25-prod
+      imagePullSecrets:
+        - name: regcred

@@ -1,0 +1,238 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@4.1
+  aws-ecr: circleci/aws-ecr@9.0
+
+parameters:
+  src-modified:
+    type: boolean
+    default: false
+  poetry-modified:
+    type: boolean
+    default: false
+  dockerfile-modified:
+    type: boolean
+    default: false
+
+commands:
+  setup_branch_name:
+    description: "Setup branch character replacement"
+    steps:
+      - run:
+          name: "Setup branch character replacement"
+          command: |
+            MODIFIED_BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//_/g')
+            echo "export VALID_BRANCH_NAME=\"$MODIFIED_BRANCH\"" >> "$BASH_ENV"
+
+  install_kustomize:
+    description: "Install kustomize"
+    steps:
+      - run:
+          name: Install kustomize
+          command: |
+            URL=https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v4.5.2/kustomize_v4.5.2_linux_amd64.tar.gz
+            curl -L $URL | tar zx
+            [ -w /usr/local/bin ] && SUDO="" || SUDO=sudo
+            $SUDO chmod +x ./kustomize
+            $SUDO mv ./kustomize /usr/local/bin
+
+jobs:
+  bump_docker_tag:
+    parameters:
+      service_name:
+        type: string
+      repo_name:
+        type: string
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - setup_branch_name
+      - install_kustomize
+      - checkout
+      - run:
+          name: What are thou params
+          command: |
+            echo "src-modified: << pipeline.parameters.src-modified >>"
+            echo "poetry-modified: << pipeline.parameters.poetry-modified >>"
+            echo "dockerfile-modified: << pipeline.parameters.dockerfile-modified >>"
+      - run:
+          name: Bump Docker Tag
+          command: |
+            cd manifests
+            REPO_NAME_VAR="$AWS_ECR_URL/<< parameters.repo_name >>"
+            echo "repo name var: $REPO_NAME_VAR"
+            kustomize edit set image $REPO_NAME_VAR=$REPO_NAME_VAR:$VALID_BRANCH_NAME-$CIRCLE_SHA1
+      - add_ssh_keys:
+          fingerprints:
+            - "$SSH_FINGERPRINT"
+      - run:
+          name: Commit & Push to GitHub
+          command: |
+            git config user.email "$GITHUB_EMAIL"
+            git config user.name "CircleCI User"
+            git checkout $CIRCLE_BRANCH
+            git add manifests/kustomization.yaml
+            git commit -am "Bumps docker tag for << parameters.repo_name >> [skip ci]"
+            git push origin $CIRCLE_BRANCH
+
+  deploy_service:
+    parameters:
+      service_name:
+        type: string
+      repo_name:
+        type: string
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - setup_branch_name
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - aws-cli/setup:
+          region: $AWS_REGION
+      - run:
+          name: Get CodeArtifact Token
+          command: |
+            TOKEN=$(aws codeartifact get-authorization-token --domain lockfale --domain-owner 059039070213 --query authorizationToken --output text)
+            echo "export CODEARTIFACT_TOKEN=$TOKEN" >> $BASH_ENV
+      - aws-ecr/build_and_push_image:
+          account_id: $AWS_ACCOUNT_ID
+          auth:
+            - aws-cli/setup:
+                region: $AWS_REGION
+          create_repo: true
+          dockerfile: "Dockerfile"
+          path: .
+          push_image: true
+          repo: << parameters.repo_name >>
+          region: $AWS_REGION
+          tag: "$VALID_BRANCH_NAME-$CIRCLE_SHA1"
+          extra_build_args: "--build-arg CODEARTIFACT_TOKEN=${CODEARTIFACT_TOKEN}"
+
+  ensure_repo_in_argocd:
+    parameters:
+      repo_name:
+        type: string
+      github_repo:
+        type: string
+    docker:
+      - image: 059039070213.dkr.ecr.us-east-1.amazonaws.com/argocd-cli:main-latest
+    steps:
+      - run:
+          name: Login to ArgoCD and ensure repo exists
+          command: |
+            echo "🔐 Logging into ArgoCD..."
+            argocd login $ARGOCD_URL \
+              --username "$ARGOCD_USERNAME" \
+              --password "$ARGOCD_PASSWORD"
+
+            # Construct repo URL using GitHub token
+            REPO_URL="https://${GH_USERNAME}:${GH_PAT}@github.com/<< parameters.github_repo >>"
+
+            echo "🔍 Checking if repo << parameters.repo_name >> exists..."
+            if argocd repo list | grep -q "<< parameters.repo_name >>"; then
+              echo "Repo << parameters.repo_name >> already exists in ArgoCD."
+            else
+              echo "Adding repo << parameters.repo_name >> to ArgoCD..."
+              argocd repo add "$REPO_URL" \
+                --name "<< parameters.repo_name >>" \
+                --insecure
+            fi
+
+  create_argocd_app:
+    parameters:
+      app_name:
+        type: string
+      github_repo:
+        type: string
+    docker:
+      - image: 059039070213.dkr.ecr.us-east-1.amazonaws.com/argocd-cli:main-latest
+    steps:
+      - run:
+          name: Login and create ArgoCD app if it doesn't exist
+          command: |
+            echo "🔐 Logging into ArgoCD..."
+            argocd login $ARGOCD_URL \
+              --username "$ARGOCD_USERNAME" \
+              --password "$ARGOCD_PASSWORD"
+
+            # Construct repo URL using GitHub token
+            REPO_URL="https://${GH_USERNAME}:${GH_PAT}@github.com/<< parameters.github_repo >>"
+
+            echo "🔍 Checking if ArgoCD app << parameters.app_name >> exists..."
+            if argocd app get "<< parameters.app_name >>" > /dev/null 2>&1; then
+              echo "ArgoCD app << parameters.app_name >> already exists."
+            else
+              echo "Creating ArgoCD app << parameters.app_name >>..."
+              argocd app create "<< parameters.app_name >>" \
+                --repo "$REPO_URL" \
+                --path "manifests" \
+                --revision "HEAD" \
+                --dest-server "https://kubernetes.default.svc" \
+                --dest-namespace "cackalacky" \
+                --project "default" \
+                --sync-policy automated \
+                --self-heal \
+                --auto-prune \
+                --sync-option PruneLast=true \
+                --sync-option Replace=true
+            fi
+
+workflows:
+  build_and_deploy_svc_broker_translation:
+    when:
+      or: [
+        << pipeline.parameters.src-modified >>,
+        << pipeline.parameters.poetry-modified >>,
+        << pipeline.parameters.dockerfile-modified >>
+      ]
+    jobs:
+      - bump_docker_tag:
+          name: bump_docker_tag
+          service_name: "svc-egress-mqtt-to-badge"
+          repo_name: "cackalacky/2025/cyberpartner/svc-egress-mqtt-to-badge"
+          context:
+            - cackalacky
+            - github
+            - aws-dev
+          filters:
+            branches:
+              only: /.*/
+
+      - deploy_service:
+          name: deploy_to_ecr
+          service_name: "svc-egress-mqtt-to-badge"
+          repo_name: "cackalacky/2025/cyberpartner/svc-egress-mqtt-to-badge"
+          context:
+            - cackalacky
+            - github
+            - aws-dev
+          requires:
+            - bump_docker_tag
+          filters:
+            branches:
+              only: /.*/
+      - ensure_repo_in_argocd:
+          name: ensure_repo_in_argocd
+          repo_name: "svc-egress-mqtt-to-badge"
+          github_repo: "lockfale/svc-egress-mqtt-to-badge"
+          context:
+            - cackalacky
+            - github
+            - aws-dev
+            - argocd
+          filters:
+            branches:
+              only: /.*/
+      - create_argocd_app:
+          name: create_argocd_app
+          app_name: "svc-egress-mqtt-to-badge"
+          github_repo: "lockfale/svc-egress-mqtt-to-badge"
+          context:
+            - cackalacky
+            - github
+            - aws-dev
+            - argocd
+          requires:
+            - ensure_repo_in_argocd

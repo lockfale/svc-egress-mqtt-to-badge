@@ -1,0 +1,14 @@
+.idea
+.vscode
+.venv
+dist
+
+dnc
+do-not-commit
+__pycache__
+do-not-commit/*
+*.log*
+
+*.pyc
+
+dnc/

@@ -1,0 +1,25 @@
+name: cp-svc-broker-translation
+services:
+  translate-mqtt-kafka-create:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - flink-net
+    environment:
+      - DOPPLER_ENVIRONMENT
+      - MQTT_HOST
+      - MQTT_PORT
+      - SA_REGISTRATION_USERNAME
+      - SA_REGISTRATION_PASSWORD
+      - PG_DB_HOST
+      - PG_DB_CKC_POOL_PORT
+      - PG_DB_CKC_POOL
+      - PG_DB_CONNECTION_LIMIT
+      - PG_DB_USER
+      - PG_DB_PASSWORD
+    command: poetry run python service_translate_mqtt_kafka.py --service create
+
+networks:
+  flink-net:
+    external: true

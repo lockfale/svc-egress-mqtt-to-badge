@@ -1,0 +1,13 @@
+.circleci
+.vscode
+.idea
+.venv
+dist
+manifests
+sql
+scripts
+tests
+dnc
+
+*_test
+

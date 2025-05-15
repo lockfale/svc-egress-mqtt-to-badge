@@ -1,0 +1,18 @@
+version: 2.1
+
+setup: true
+
+orbs:
+  path-filtering: circleci/path-filtering@1.0
+
+workflows:
+  setup-workflow:
+    jobs:
+      - path-filtering/filter:
+          tag: "3.12"
+          base-revision: main
+          config-path: .circleci/workflows.yml
+          mapping: |
+            .*\.py src-modified true
+            poetry.lock poetry-modified true
+            Docker* dockerfile-modified true
