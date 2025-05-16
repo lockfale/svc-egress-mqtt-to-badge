@@ -66,6 +66,7 @@ def shutdown_redis():
 
 
 def should_publish_to_mqtt(badge_id: str, source_event_uuid: str = None, force_mqtt_publish: bool = False) -> bool:
+    """fff"""
     if force_mqtt_publish:
         return True
 
