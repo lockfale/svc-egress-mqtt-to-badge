@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "ckc-cyberpartner-ingress-highway"
+name = "egress-mqtt-to-badge"
 version = "1.0.0"
-description = "Cyberpartner Event Ingress Highway"
+description = "egress"
 authors = ["Alex Persinger <nutcrunch@cackalackycon.org>"]
 license = "MIT"
 
@@ -14,7 +14,7 @@ paho-mqtt = "~2.1"
 doppler-env = "*"
 redis = "*"
 async_timeout = "*"
-confluent-kafka = "^2.8.2"
+confluent-kafka = "^2.10"
 clickhouse-connect = "*"
 lockfale-connectors = { version = "1.3.8", source = "lockfale" }
 

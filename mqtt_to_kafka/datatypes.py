@@ -92,6 +92,7 @@ class RawCyberPartnerStatus:
             "thirst",
             "weight",
             "happiness",
+            "health",
             "modifier_age"
         ]
         payload = {k: v for k, v in payload.items() if k in payload_whitelist}
@@ -101,29 +102,29 @@ class RawCyberPartnerStatus:
 def transform_cyberpartner_dict(raw_cyberpartner: Dict) -> RawCyberPartnerStatus | None:
     try:
         identity = Identity(
-            name=raw_cyberpartner["cp"]["name"],
-            family=raw_cyberpartner["cp"]["family"],
-            archetype=raw_cyberpartner["cp"]["archetype"],
-            birthday_ts=raw_cyberpartner["cp"]["birthday_ts"],
-            birthday_epoch=raw_cyberpartner["cp"]["birthday_epoch"],
-            badge_id=raw_cyberpartner["cp"]["badge_id"],
-            rock=raw_cyberpartner["cp"]["rock"],
-            is_active=raw_cyberpartner["cp"]["is_active"],
+            name=raw_cyberpartner["cp"].get("name"),
+            family=raw_cyberpartner["cp"].get("family"),
+            archetype=raw_cyberpartner["cp"].get("archetype"),
+            birthday_ts=raw_cyberpartner["cp"].get("birthday_ts"),
+            birthday_epoch=raw_cyberpartner["cp"].get("birthday_epoch"),
+            badge_id=raw_cyberpartner["cp"].get("badge_id"),
+            rock=raw_cyberpartner["cp"].get("rock"),
+            is_active=raw_cyberpartner["cp"].get("is_active"),
         )
         state = State(
-            status=raw_cyberpartner["state"]["status"],
-            wellness=raw_cyberpartner["state"]["wellness"],
-            disposition=raw_cyberpartner["state"]["disposition"],
-            age=raw_cyberpartner["state"]["age"],
-            hunger=raw_cyberpartner["state"]["hunger"],
-            thirst=raw_cyberpartner["state"]["thirst"],
-            weight=raw_cyberpartner["state"]["weight"],
-            happiness=raw_cyberpartner["state"]["happiness"],
-            health=raw_cyberpartner["state"]["health"],
-            life_phase=raw_cyberpartner["state"]["life_phase"],
-            life_phase_change_timestamp=str(raw_cyberpartner["state"]["life_phase_change_timestamp"]),
+            status=raw_cyberpartner["state"].get("status"),
+            wellness=raw_cyberpartner["state"].get("wellness"),
+            disposition=raw_cyberpartner["state"].get("disposition"),
+            age=raw_cyberpartner["state"].get("age"),
+            hunger=raw_cyberpartner["state"].get("hunger"),
+            thirst=raw_cyberpartner["state"].get("thirst"),
+            weight=raw_cyberpartner["state"].get("weight"),
+            happiness=raw_cyberpartner["state"].get("happiness"),
+            health=raw_cyberpartner["state"].get("health"),
+            life_phase=raw_cyberpartner["state"].get("life_phase"),
+            life_phase_change_timestamp=str(raw_cyberpartner["state"].get("life_phase_change_timestamp")),
         )
-        modifiers = Modifiers(**{k: Modifier(**v) for k, v in raw_cyberpartner["cp"]["stat_modifiers"].items()})
+        modifiers = Modifiers(**{k: Modifier(**v) for k, v in raw_cyberpartner["cp"].get("stat_modifiers", {}).items()})
         return RawCyberPartnerStatus(
             identity=identity,
             state=state,

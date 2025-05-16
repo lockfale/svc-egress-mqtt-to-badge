@@ -3,6 +3,7 @@ import logging
 import logging.config
 import os
 import uuid
+import time
 from datetime import datetime, timezone
 from typing import Dict, Optional
 
@@ -164,11 +165,13 @@ def _send_state_to_badge(mqtt_pub: MQTTPublisher, msg: Dict) -> bool:
 
     _topic = build_mqtt_topic(badge_id, msg.get("event_source", ""))
     mqtt_payload = build_mqtt_payload(badge_id, msg)
+    logger.info(mqtt_payload)
     if not mqtt_payload:
         return False
 
     mqtt_payload["ts"] = datetime.now(timezone.utc).timestamp()
     try:
+        logger.info(mqtt_payload)
         _ = mqtt_pub.publish(_topic, json.dumps(mqtt_payload))
     except Exception as e:
         logger.error(f"Error publishing message: {str(e)}")
@@ -192,8 +195,20 @@ def main():
     logger.info("Waiting for messages... (Press Ctrl+C to exit)")
     topic = "egress-mqtt-to-badge"
     try:
-        consumer = KafkaConsumer(os.getenv("KAFKA_BROKERS_SVC"), [topic], f"kafka-mqtt-consumer-group")
+        logger.info([topic])
+        consumer = KafkaConsumer(topics=[topic],
+            kafka_broker=os.getenv("KAFKA_BROKERS_SVC"), group_id="kafka-mqtt-consumer-group")
+    except Exception as e:
+        logger.error(f"Error connecting to resources: {str(e)}")
+        exit(1)
+
+    try:
         producer = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
+    except Exception as e:
+        logger.error(f"Error connecting to resources: {str(e)}")
+        exit(1)
+
+    try:
         setup_redis()
     except Exception as e:
         logger.error(f"Error connecting to resources: {str(e)}")
