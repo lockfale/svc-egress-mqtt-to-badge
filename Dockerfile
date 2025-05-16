@@ -17,6 +17,5 @@ COPY pyproject.toml poetry.lock log.ini /app/
 RUN poetry install --no-root --no-interaction --no-ansi
 
 COPY mqtt_to_kafka /app/mqtt_to_kafka
-COPY internal_kafka.py /app/internal_kafka.py
 COPY service_translate_kafka_mqtt.py service_translate_kafka_mqtt.py /app/
 
