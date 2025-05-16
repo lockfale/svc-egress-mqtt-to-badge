@@ -72,6 +72,7 @@ class Modifiers:
 
 @dataclass
 class RawCyberPartnerStatus:
+    """asdf"""
     identity: Identity
     state: State
     modifiers: Modifiers
