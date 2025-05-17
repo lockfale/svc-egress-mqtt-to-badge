@@ -87,7 +87,6 @@ class RawCyberPartnerStatus:
 
         payload_whitelist = [
             "birthday_epoch",
-            "rock",
             "status",
             "hunger",
             "thirst",
