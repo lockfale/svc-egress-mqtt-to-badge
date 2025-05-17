@@ -92,7 +92,6 @@ class RawCyberPartnerStatus:
             "thirst",
             "weight",
             "happiness",
-            "health",
             "modifier_age"
         ]
         payload = {k: v for k, v in payload.items() if k in payload_whitelist}
