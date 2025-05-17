@@ -166,13 +166,11 @@ def _send_state_to_badge(mqtt_pub: MQTTPublisher, msg: Dict) -> bool:
 
     _topic = build_mqtt_topic(badge_id, msg.get("event_source", ""))
     mqtt_payload = build_mqtt_payload(badge_id, msg)
-    logger.info(mqtt_payload)
     if not mqtt_payload:
         return False
 
     mqtt_payload["ts"] = datetime.now(timezone.utc).timestamp()
     try:
-        logger.info(mqtt_payload)
         _ = mqtt_pub.publish(_topic, json.dumps(mqtt_payload))
     except Exception as e:
         logger.error(f"Error publishing message: {str(e)}")
