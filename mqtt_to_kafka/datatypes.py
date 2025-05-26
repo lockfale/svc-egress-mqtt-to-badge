@@ -23,6 +23,7 @@ class Identity:
             "rock": self.rock,
         }
 
+
 @dataclass
 class State:
     status: int
@@ -73,6 +74,7 @@ class Modifiers:
 @dataclass
 class RawCyberPartnerStatus:
     """asdf"""
+
     identity: Identity
     state: State
     modifiers: Modifiers
@@ -85,15 +87,7 @@ class RawCyberPartnerStatus:
         for field_name, field_value in vars(self.modifiers).items():
             payload[f"modifier_{field_name}"] = field_value.multiplier
 
-        payload_whitelist = [
-            "birthday_epoch",
-            "status",
-            "hunger",
-            "thirst",
-            "weight",
-            "happiness",
-            "modifier_age"
-        ]
+        payload_whitelist = ["birthday_epoch", "status", "hunger", "thirst", "weight", "happiness", "modifier_age"]
         payload = {k: v for k, v in payload.items() if k in payload_whitelist}
         return payload
 
@@ -124,10 +118,6 @@ def transform_cyberpartner_dict(raw_cyberpartner: Dict) -> RawCyberPartnerStatus
             life_phase_change_timestamp=str(raw_cyberpartner["state"].get("life_phase_change_timestamp")),
         )
         modifiers = Modifiers(**{k: Modifier(**v) for k, v in raw_cyberpartner["cp"].get("stat_modifiers", {}).items()})
-        return RawCyberPartnerStatus(
-            identity=identity,
-            state=state,
-            modifiers=modifiers
-        )
+        return RawCyberPartnerStatus(identity=identity, state=state, modifiers=modifiers)
     except Exception as e:
         return None

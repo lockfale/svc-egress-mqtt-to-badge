@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     networks:
-      - flink-net
+      - ckc-net
     environment:
       - DOPPLER_ENVIRONMENT
       - MQTT_HOST
@@ -22,9 +22,11 @@ services:
     command: poetry run python service_translate_kafka_mqtt.py
     volumes:
       - ./service_translate_kafka_mqtt.py:/app/service_translate_kafka_mqtt.py
-      - ./internal_kafka.py:/app/internal_kafka.py
+      - ./mqtt_publish_gate.py:/app/mqtt_publish_gate.py
+      - ./mqtt_publish_payload.py:/app/mqtt_publish_payload.py
+      - ./redis_db_indexes.py:/app/redis_db_indexes.py
       - ./mqtt_to_kafka:/app/mqtt_to_kafka
 
 networks:
-  flink-net:
+  ckc-net:
     external: true

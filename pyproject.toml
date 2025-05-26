@@ -16,12 +16,7 @@ redis = "*"
 async_timeout = "*"
 confluent-kafka = "^2.10"
 clickhouse-connect = "*"
-lockfale-connectors = { version = "1.3.8", source = "lockfale" }
-
-[[tool.poetry.source]]
-name = "lockfale"
-url = "https://lockfale-059039070213.d.codeartifact.us-east-1.amazonaws.com/pypi/lockfale/simple/"
-priority = "supplemental"
+lockfale-connectors = "1.5.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "~24.4"

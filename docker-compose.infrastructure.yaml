@@ -4,7 +4,7 @@ services:
   zookeeper:
     image: wurstmeister/zookeeper
     networks:
-      - flink-net
+      - ckc-net
 
   kafka:
     image: wurstmeister/kafka
@@ -14,12 +14,12 @@ services:
       KAFKA_CREATE_TOPICS: "ingress-cackalacky-cyberpartner-create:1:1,egress-cackalacky-cyberpartner-create:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     networks:
-      - flink-net
+      - ckc-net
 
   redis:
     image: redis:8.0-M04-bookworm
     networks:
-      - flink-net
+      - ckc-net
     ports:
       - "6379:6379"
     volumes:
@@ -29,7 +29,7 @@ services:
   python-kafka:
     image: python:3.11.6-bullseye
     networks:
-      - flink-net
+      - ckc-net
     depends_on:
       - kafka
       - redis
@@ -42,9 +42,9 @@ services:
     stdin_open: true
 
 networks:
-  flink-net:
+  ckc-net:
     external: false
-    name: flink-net
+    name: ckc-net
 
 volumes:
   redis-data:
