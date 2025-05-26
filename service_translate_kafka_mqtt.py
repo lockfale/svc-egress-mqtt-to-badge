@@ -39,12 +39,8 @@ def setup_redis():
     global REDIS_CLIENT_CP_DATA
     global REDIS_CLIENT_DB_INVENTORY
     global REDIS_CLIENT_GENERAL
-    REDIS_CLIENT_CP_DATA = redis.Redis(
-        host=redis_host, port=redis_port, decode_responses=True, db=redis_db_idx_cp_data
-    )
-    REDIS_CLIENT_GENERAL = redis.Redis(
-        host=redis_host, port=redis_port, decode_responses=True, db=redis_db_idx_last_notification_to_badge
-    )
+    REDIS_CLIENT_CP_DATA = redis.Redis(host=redis_host, port=redis_port, decode_responses=True, db=redis_db_idx_cp_data)
+    REDIS_CLIENT_GENERAL = redis.Redis(host=redis_host, port=redis_port, decode_responses=True, db=redis_db_idx_last_notification_to_badge)
 
     REDIS_CLIENT_DB_INVENTORY = redis.Redis(host=redis_host, port=redis_port, decode_responses=True, db=redis_db_idx_cp_inventory)
 
