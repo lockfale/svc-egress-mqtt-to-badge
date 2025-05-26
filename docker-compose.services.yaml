@@ -25,7 +25,7 @@ services:
       - ./mqtt_publish_gate.py:/app/mqtt_publish_gate.py
       - ./mqtt_publish_payload.py:/app/mqtt_publish_payload.py
       - ./redis_db_indexes.py:/app/redis_db_indexes.py
-      - ./mqtt_to_kafka:/app/mqtt_to_kafka
+      - ./datatypes.py:/app/datatypes.py
 
 networks:
   ckc-net:

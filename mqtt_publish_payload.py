@@ -1,11 +1,10 @@
 import json
-import logging
 import logging.config
 from typing import Any, Dict
 
 import redis
 
-from mqtt_to_kafka.datatypes import transform_cyberpartner_dict
+from datatypes import transform_cyberpartner_dict
 
 logger = logging.getLogger("console")
 
