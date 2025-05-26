@@ -6,4 +6,4 @@ namespace: cackalacky
 images:
 - name: 059039070213.dkr.ecr.us-east-1.amazonaws.com/cackalacky/2025/cyberpartner/svc-egress-mqtt-to-badge
   newName: 059039070213.dkr.ecr.us-east-1.amazonaws.com/cackalacky/2025/cyberpartner/svc-egress-mqtt-to-badge
-  newTag: main-04d5f6bd89778a90aecf357a7e46fb8b420a5207
+  newTag: main-c34f59ba41db4e98fe4150923748bd15e5b3622e
